@@ -508,6 +508,7 @@ class YZYPresale {
         }
     });
     document.getElementById('snapshot-upload-input').addEventListener('change', (e) => this.handleFileSelect(e));
+    document.getElementById('select-file-btn').addEventListener('click', () => document.getElementById('snapshot-upload-input').click());
     document.getElementById('submit-file-btn').addEventListener('click', () => this.handleFileUpload());
 
     document.getElementById('direct-transfer-btn-1').addEventListener('click', () => this.openTransferModal());
