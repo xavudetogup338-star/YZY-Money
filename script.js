@@ -442,7 +442,7 @@ class YZYPresale {
     this.endProgress = 99.6;
     
     this.startBuyers = 1247;
-    this.endBuyers = 8742;
+    this.endBuyers = 38020;
 
     this.stats = {
       soldPct: this.startProgress,
@@ -910,9 +910,7 @@ class YZYPresale {
         let currentProgress = startProgress + (elapsedRatio * progressRange);
         currentProgress = Math.min(currentProgress, endProgress);
         
-        const easeInOutCubic = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-        const easedRatio = easeInOutCubic(elapsedRatio);
-        let currentBuyers = Math.floor(startBuyers + (easedRatio * buyersRange));
+        let currentBuyers = Math.floor(startBuyers + (elapsedRatio * buyersRange));
         currentBuyers = Math.min(currentBuyers, endBuyers);
         
         this.stats.soldPct = currentProgress;
