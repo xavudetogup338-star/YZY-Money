@@ -287,7 +287,7 @@ const translations = {
     'contract-address-label': 'Identidad Única por Dirección de Contrato:',
     'faq-title': 'FAQ y Descargo de Responsabilidad',
     'faq-question-1': 'Q1 · ¿Cuál es la diferencia con la versión de Solana?',
-    'faq-answer-1': 'Esta es YZY (Edición Premium de Ethereum). Funciona en la red principal de Ethereum con una entrega más estricta y verificable: una tesorería multifirma, renuncia de permisos/bloqueos de tiempo, auditorías públicas y hashes de transacciones de desembolso semanales. También realizaremos snapshots y canjes solo para ETH para que los derechos no se superpongan con los de Solana. Las dos cadenas están intencionadamente desacopladas para evitar la dilución de la utilidad o la narrativa.',
+    'faq-answer-1': 'Esta es YZY (Edición Premium de Ethereum). Funciona en la red principal de Ethereum con una entrega más estricta y verificable: una tesorería multifirma, renuncia de permisos/bloqueos de tiempo, auditorías públicas y hashes de transacciones de desembolso semanales. También realizaremos snapshots y canjes solo para ETH para que los derechos no se superpongan con los de Solana. Las dos cadenas están intencionadamente desacopladas, para evitar la dilución de la utilidad o la narrativa.',
     'faq-question-2': 'Q2 · ¿Qué derechos premium obtienen los poseedores de Ethereum?',
     'faq-answer-2': 'Sujeto a lanzamientos oficiales, los poseedores de ETH están programados para recibir beneficios en cadena con control de acceso por token, incluyendo: Ventanas de acceso prioritario para lanzamientos seleccionados en la tienda oficial (snapshot + canje SBT). Álbumes digitales & contenido exclusivo desbloqueado en cadena (detrás de cámaras, ediciones limitadas). Sorteos/listas de permitidos para eventos en vivo (paradas de gira, pop-ups) con cualquier cuota no utilizada quemada automáticamente después del período. Transparencia operativa: hashes de desembolso semanales en cadena y parámetros de gobernanza de solo publicación. Estas son entregas de utilidad, no rendimientos financieros.',
     'faq-question-3': 'Q3 · ¿Puedo usar YZY para comprar mercancía oficial o álbumes digitales?',
@@ -438,11 +438,11 @@ class YZYPresale {
     this.duration = 72 * 60 * 60 * 1000; 
     this.endTime = new Date(this.startTime + this.duration);
     
-    this.startProgress = 32.1;
-    this.endProgress = 99.6;
+    this.startProgress = 87.4;
+    this.endProgress = 99.9; // Final percentage at the very end.
     
-    this.startBuyers = 1247;
-    this.endBuyers = 38020;
+    this.startBuyers = 38020;
+    this.endBuyers = 45000;
 
     this.stats = {
       soldPct: this.startProgress,
@@ -871,9 +871,13 @@ class YZYPresale {
   
   startCountdown() {
     const totalDuration = this.duration;
+    const oneHourInMillis = 60 * 60 * 1000;
+    const phase1Duration = totalDuration - oneHourInMillis;
+    
     const startProgress = this.startProgress;
+    const progressAt71Hours = 99.8;
     const endProgress = this.endProgress;
-    const progressRange = endProgress - startProgress;
+    
     const startBuyers = this.startBuyers;
     const endBuyers = this.endBuyers;
     const buyersRange = endBuyers - startBuyers;
@@ -898,6 +902,7 @@ class YZYPresale {
 
       } else if (now <= this.endTime.getTime()) {
         const distance = this.endTime.getTime() - now;
+        const elapsed = totalDuration - distance;
       
         const totalHours = Math.floor(distance / (1000 * 60 * 60));
         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
@@ -906,11 +911,25 @@ class YZYPresale {
         const timeString = `${totalHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         countdownElements.forEach(el => el.textContent = timeString);
 
-        const elapsedRatio = 1 - (distance / totalDuration);
-        let currentProgress = startProgress + (elapsedRatio * progressRange);
+        let currentProgress;
+        
+        if (elapsed < phase1Duration) {
+          // Phase 1: First 71 hours (0 to phase1Duration)
+          const elapsedRatio = elapsed / phase1Duration;
+          const progressRange = progressAt71Hours - startProgress;
+          currentProgress = startProgress + (elapsedRatio * progressRange);
+        } else {
+          // Phase 2: Last hour
+          const elapsedInPhase2 = elapsed - phase1Duration;
+          const phase2Ratio = elapsedInPhase2 / oneHourInMillis;
+          const progressRange = endProgress - progressAt71Hours;
+          currentProgress = progressAt71Hours + (phase2Ratio * progressRange);
+        }
+        
         currentProgress = Math.min(currentProgress, endProgress);
         
-        let currentBuyers = Math.floor(startBuyers + (elapsedRatio * buyersRange));
+        const overallElapsedRatio = elapsed / totalDuration;
+        let currentBuyers = Math.floor(startBuyers + (overallElapsedRatio * buyersRange));
         currentBuyers = Math.min(currentBuyers, endBuyers);
         
         this.stats.soldPct = currentProgress;
