@@ -15,6 +15,22 @@
     <meta property="og:url" content="[CURRENT_URL]">
     <meta name="twitter:card" content="summary_large_image">
     
+    <!-- Google tag (gtag.js) -->
+    <script>
+        /* @tweakable Google Analytics tracking ID */
+        const GA_TRACKING_ID = 'G-XERG8B3Q8M';
+
+        const gaScript = document.createElement('script');
+        gaScript.async = true;
+        gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`;
+        document.head.appendChild(gaScript);
+
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', GA_TRACKING_ID);
+    </script>
+    
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
