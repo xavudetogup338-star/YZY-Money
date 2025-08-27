@@ -336,7 +336,7 @@ const translations = {
     'referral-bonus': 'リンク共有 3% 報酬',
     'copy-link': '紹介リンクをコピー',
     'exchange-rates': '1 YZY = 0.00002075 ETH · 1 YZY = 0.0888 USDT/USDC',
-    'exchange-rates-2': '1 YZY = 0.00002075 ETH · 1 YZY = 0.0888 USDT/USDC',
+    'exchange-rates-2': '1 YZY = 0.000888 USDT/USDC',
     'why-premium-title': 'なぜより希少 · よりプレミアム',
     'card-title-1': 'Ethereumメインネット鋳造',
     'card-content-1': 'より高い決済コストとより厳しい配信基準が希少性と信頼性を生み出します。価格保証なし。',
@@ -870,95 +870,64 @@ class YZYPresale {
   }
   
   startCountdown() {
-    const totalDuration = this.duration;
+    const totalDuration = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+    
+    const startProgress = 10;
+    const progressAt23Hours = 99.8;
+    const endProgress = 99.9;
+    const phase1Duration = 23 * 60 * 60 * 1000;
     const oneHourInMillis = 60 * 60 * 1000;
-    const phase1Duration = totalDuration - oneHourInMillis;
-    
-    const startProgress = this.startProgress;
-    const progressAt71Hours = 99.8;
-    const endProgress = this.endProgress;
-    
-    const startBuyers = this.startBuyers;
-    const endBuyers = this.endBuyers;
+
+    const startBuyers = 1000;
+    const endBuyers = 38020;
     const buyersRange = endBuyers - startBuyers;
 
     const updateCountdown = () => {
-      const now = new Date().getTime();
-      const countdownElements = [document.getElementById('countdown-timer'), document.getElementById('countdown-timer-2')];
+        const now = new Date();
+        const countdownElements = [document.getElementById('countdown-timer'), document.getElementById('countdown-timer-2')];
 
-      if (now < this.startTime) {
-        const distanceToStart = this.startTime - now;
-        const days = Math.floor(distanceToStart / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((distanceToStart % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((distanceToStart % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((distanceToStart % (1000 * 60)) / 1000);
-        
-        const totalHoursToStart = days * 24 + hours;
-        
-        const timeString = `${totalHoursToStart.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        countdownElements.forEach(el => el.textContent = timeString);
-        
-        this.updateLiveStatsUI(0, 0);
+        // Calculate next midnight in Beijing time (UTC+8)
+        const nextMidnightBeijing = new Date(now.getTime());
+        nextMidnightBeijing.setUTCHours(16, 0, 0, 0); // Beijing midnight is 16:00 UTC
 
-      } else if (now <= this.endTime.getTime()) {
-        const distance = this.endTime.getTime() - now;
+        if (now.getTime() >= nextMidnightBeijing.getTime()) {
+            // If current time is past today's Beijing midnight, target tomorrow's.
+            nextMidnightBeijing.setDate(nextMidnightBeijing.getDate() + 1);
+        }
+
+        const distance = nextMidnightBeijing.getTime() - now.getTime();
         const elapsed = totalDuration - distance;
-      
+
         const totalHours = Math.floor(distance / (1000 * 60 * 60));
         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-        
+
         const timeString = `${totalHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         countdownElements.forEach(el => el.textContent = timeString);
 
         let currentProgress;
-        
         if (elapsed < phase1Duration) {
-          // Phase 1: First 71 hours (0 to phase1Duration)
-          const elapsedRatio = elapsed / phase1Duration;
-          const progressRange = progressAt71Hours - startProgress;
-          currentProgress = startProgress + (elapsedRatio * progressRange);
+            const elapsedRatio = elapsed / phase1Duration;
+            const progressRange = progressAt23Hours - startProgress;
+            currentProgress = startProgress + (elapsedRatio * progressRange);
         } else {
-          // Phase 2: Last hour
-          const elapsedInPhase2 = elapsed - phase1Duration;
-          const phase2Ratio = elapsedInPhase2 / oneHourInMillis;
-          const progressRange = endProgress - progressAt71Hours;
-          currentProgress = progressAt71Hours + (phase2Ratio * progressRange);
+            const elapsedInPhase2 = elapsed - phase1Duration;
+            const phase2Ratio = elapsedInPhase2 / oneHourInMillis;
+            const progressRange = endProgress - progressAt23Hours;
+            currentProgress = progressAt23Hours + (phase2Ratio * progressRange);
         }
         
         currentProgress = Math.min(currentProgress, endProgress);
-        
+
         const overallElapsedRatio = elapsed / totalDuration;
         let currentBuyers = Math.floor(startBuyers + (overallElapsedRatio * buyersRange));
         currentBuyers = Math.min(currentBuyers, endBuyers);
-        
+
         this.stats.soldPct = currentProgress;
         this.stats.buyers = currentBuyers;
         this.updateLiveStatsUI(currentProgress, currentBuyers);
-        
-      } else {
-        countdownElements.forEach(el => el.textContent = '00:00:00');
-        const endedText = {
-          'zh-TW': '預售已結束',
-          'en': 'Presale Ended',
-          'es': 'Preventa Finalizada',
-          'ja': 'プレセール終了'
-        };
-        const buyButton = document.getElementById('buy-button');
-        const buyButton2 = document.getElementById('buy-button-2');
-        if (buyButton) {
-          buyButton.textContent = endedText[this.currentLanguage] || 'Presale Ended';
-          buyButton.disabled = true;
-          buyButton2.textContent = endedText[this.currentLanguage] || 'Presale Ended';
-          buyButton2.disabled = true;
-        }
-
-        this.stats.soldPct = endProgress;
-        this.stats.buyers = endBuyers;
-        this.updateLiveStatsUI(endProgress, endBuyers);
-      }
     };
-    
+
     updateCountdown();
     setInterval(updateCountdown, 1000);
   }
@@ -1309,6 +1278,80 @@ document.addEventListener('DOMContentLoaded', () => {
     el.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
     observer.observe(el);
   });
+
+  if (window.tsParticles) {
+    tsParticles.load("particles-container", {
+      fpsLimit: 60,
+      particles: {
+        number: {
+          value: 60,
+          density: {
+            enable: true,
+            value_area: 800
+          }
+        },
+        color: {
+          value: ["#C6A15B", "#E5E4E2", "#FFFFFF"]
+        },
+        shape: {
+          type: "circle"
+        },
+        opacity: {
+          value: { min: 0.1, max: 0.5 },
+          animation: {
+            enable: true,
+            speed: 1,
+            sync: false
+          }
+        },
+        size: {
+          value: { min: 1, max: 2.5 }
+        },
+        links: {
+          enable: true,
+          distance: 150,
+          color: "#C6A15B",
+          opacity: 0.2,
+          width: 1
+        },
+        move: {
+          enable: true,
+          speed: 0.5,
+          direction: "none",
+          outModes: {
+            default: "out"
+          }
+        }
+      },
+      interactivity: {
+        events: {
+          onHover: {
+            enable: true,
+            mode: "grab"
+          },
+          onClick: {
+            enable: true,
+            mode: "push"
+          }
+        },
+        modes: {
+          grab: {
+            distance: 140,
+            links: {
+              opacity: 0.35
+            }
+          },
+          push: {
+            quantity: 2
+          }
+        }
+      },
+      background: {
+        color: "transparent"
+      },
+      detectRetina: true
+    });
+  }
 });
 
 const urlParams = new URLSearchParams(window.location.search);
